@@ -161,7 +161,7 @@ def run_model(record, model, verbose):
     features = extract_features(record)
     numeric_feature = np.array(features, dtype=float)
     if np.isnan(numeric_feature).any():
-        return None, None
+        return 0, 0
     
     features = features.reshape(1, -1)
 
