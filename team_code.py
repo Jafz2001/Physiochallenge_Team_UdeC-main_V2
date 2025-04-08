@@ -51,7 +51,7 @@ def train_model(data_folder, model_folder, verbose):
     # Extract the features and labels from the data.
     if verbose:
         print('Extracting features and labels from the data...')
-
+    
     features = []
     labels = []
 
@@ -77,8 +77,8 @@ def train_model(data_folder, model_folder, verbose):
     
     features = np.stack(features)
     labels = np.stack(labels)
-    
-    print("Signal error counter:", error)
+    if verbose:
+        print("Signal error counter:", error)
 
     # ----------------------------
     # Conteo antes de SMOTE
@@ -235,6 +235,14 @@ def save_model(model_folder, model):
     
     
 #####################################################################################
+def is_invalid(x):
+    if x is None:
+        return True
+    try:
+        return not np.isfinite(float(x))
+    except (ValueError, TypeError):
+        return True
+
 def filter_records_by_folder(records, folder_keyword):
     """Return all records that contain a specific folder in their path."""
     return [f for f in records if folder_keyword in os.path.normpath(os.path.dirname(f))]
@@ -271,4 +279,3 @@ def select_records(data_folder, records, max_ptb = 3000, max_negative_code = 600
     # Combine all selected records
     final_records = records + PTB_records + positives + negatives
     return final_records, len(final_records)
-
