@@ -52,8 +52,8 @@ def train_model(data_folder, model_folder, verbose):
     if verbose:
         print('Extracting features and labels from the data...')
 
-    features = np.zeros((num_records, 21), dtype=np.float64)
-    labels = np.zeros(num_records, dtype=bool)
+    features = []
+    labels = []
 
     # Iterate over the records.
     error = 0
@@ -68,13 +68,15 @@ def train_model(data_folder, model_folder, verbose):
 
         numeric_feature = np.array(feature, dtype=float)
         
-        
         if np.isnan(numeric_feature).any():
             error += 1
             continue
 
-        features[i] = feature
-        labels[i] = load_label(record)
+        features.append(numeric_feature)
+        labels.append(load_label(record))
+    
+    features = np.stack(features)
+    labels = np.stack(labels)
     
     print("Signal error counter:", error)
 
@@ -203,7 +205,7 @@ def extract_features(record):
 
         # Agregar características adicionales
         base_features['frequency_domain'] = frequency_domain_analysis(normalized_data[:, 1], sfreq)
-        base_features['nonlinear'] = nonlinear_features(normalized_data[:, 1])
+        #base_features['nonlinear'] = nonlinear_features(normalized_data[:, 1])
         base_features['signal_characteristics'] = additional_signal_characteristics(normalized_data[:, 1])
         base_features['wavelet_features'] = complex_wavelet_transform(normalized_data[:, 1])
 
@@ -214,7 +216,7 @@ def extract_features(record):
         } 
 
         features = flatten_features_dict(base_features)
-        if len(features) != 21:
+        if any(is_invalid(f) for f in features):
             return None
 
         return features
