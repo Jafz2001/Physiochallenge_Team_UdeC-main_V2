@@ -17,6 +17,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 from sklearn.model_selection import GridSearchCV
 from xgboost import XGBClassifier
+import csv
 
 from helper_code import *
 from features_extractor import *
@@ -66,17 +67,22 @@ def train_model(data_folder, model_folder, verbose):
 
         feature = extract_features(record)
 
+        if isinstance(feature, str) and feature == "NO_BASE_FEATURES":
+            continue
+
         numeric_feature = np.array(feature, dtype=float)
-        
+
         if np.isnan(numeric_feature).any():
             error += 1
             continue
+
 
         features.append(numeric_feature)
         labels.append(load_label(record))
     
     features = np.stack(features)
     labels = np.stack(labels)
+
     if verbose:
         print("Signal error counter:", error)
 
@@ -200,8 +206,8 @@ def extract_features(record):
             # Extraer características ECG base
         base_features = extract_ecg_features(normalized_data, channel=1, fs=sfreq)
 
-        if base_features is None:
-            return None
+        if base_features == None:
+            return "NO_BASE_FEATURES"
 
         # Agregar características adicionales
         base_features['frequency_domain'] = frequency_domain_analysis(normalized_data[:, 1], sfreq)
@@ -214,8 +220,9 @@ def extract_features(record):
             'age': age,
             'sex_encoding': one_hot_encoding_sex
         } 
-
+    
         features = flatten_features_dict(base_features)
+
         if any(is_invalid(f) for f in features):
             return None
 
@@ -225,16 +232,14 @@ def extract_features(record):
         print(f"Error al procesar el registro {record}: {e}")
         return None
     
-
 # Save your trained model.
 def save_model(model_folder, model):
     d = {'model': model}
     filename = os.path.join(model_folder, 'model.sav')
     joblib.dump(d, filename, protocol=0)
     
-    
-    
 #####################################################################################
+
 def is_invalid(x):
     if x is None:
         return True
@@ -289,4 +294,3 @@ def select_records(data_folder, records, max_sami = 3000, max_ptb = 3000, max_ne
     final_records = Sami_records + PTB_records + positives + negatives
     
     return final_records, len(final_records)
-
