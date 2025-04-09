@@ -251,7 +251,16 @@ def sample_records(records, max_samples):
     """Return a random subset of records, up to max_samples."""
     return random.sample(records, min(max_samples, len(records)))
 
-def select_records(data_folder, records, max_ptb = 3000, max_negative_code = 6000, max_positive_code = 6000):
+def select_records(data_folder, records, max_sami = 3000, max_ptb = 3000, max_negative_code = 6000, max_positive_code = 6000):
+    #Check folders existance
+    if not any(folder in os.listdir(data_folder) for folder in ["CODE-15%", "PTB-XL", "SaMi-Trop"]):
+        print('Data folders not found: CODE-15%, PTB-XL, SaMi-Trop')
+        return records, len(records)
+    # Identify SaMi-Trop records and remove them from the list
+    Sami_records = filter_records_by_folder(records, "SaMi-Trop")
+    records = list(set(records) - set(Sami_records))
+    Sami_records = sample_records(Sami_records, max_sami)
+    
     # Identify PTB-XL records and remove them from the list
     PTB_records = filter_records_by_folder(records, "PTB-XL")
     records = list(set(records) - set(PTB_records))
@@ -277,5 +286,7 @@ def select_records(data_folder, records, max_ptb = 3000, max_negative_code = 600
     positives = sample_records(positives, max_positive_code)
     negatives = sample_records(negatives, max_negative_code)
     # Combine all selected records
-    final_records = records + PTB_records + positives + negatives
+    final_records = Sami_records + PTB_records + positives + negatives
+    
     return final_records, len(final_records)
+
